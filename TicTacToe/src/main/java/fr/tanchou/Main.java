@@ -9,7 +9,6 @@ public class Main {
         System.out.println("Démarrage du serveur TicTacToe sur le port " + port);
 
         try (ServerSocket serverSocket = new ServerSocket()) {
-            // Spécifie l'adresse 0.0.0.0 et le port
             serverSocket.bind(new InetSocketAddress("0.0.0.0", port));
             System.out.println("Serveur à l'écoute sur 0.0.0.0:" + port);
 
@@ -17,7 +16,6 @@ public class Main {
 
             while (true) {
                 Socket clientSocket = serverSocket.accept();
-                System.out.println("Nouvelle connexion !");
                 new Thread(() -> lobby.handleNewConnection(clientSocket)).start();
             }
         } catch (IOException e) {

@@ -1,78 +1,70 @@
 package fr.tanchou;
 
-import java.net.*;
+import java.util.LinkedList;
+import java.util.List;
 
 public class GameSession implements Runnable {
 
-    private final Player player1;
-    private final Player player2;
-
-    private final Player[] players = new Player[2];
+    private final List<Player> players = new LinkedList<>();
 
     private final Board board;
 
     boolean gameOver = false;
 
-    public GameSession(Socket player1, Socket player2) {
-        this.player1 = new Player(player1, 1);
-        this.player2 = new Player(player2, 2);
-
-        players[0] = this.player1;
-        players[1] = this.player2;
+    public GameSession(Player player1, Player player2) {
+        this.players.add(player1);
+        this.players.add(player2);
 
         this.board = new Board();
     }
 
     @Override
     public void run() {
-        // Initialisation de la partie
-        player1.sendMessage("Partie commencée. Vous êtes le joueur 1.");
-        player2.sendMessage("Partie commencée. Vous êtes le joueur 2.");
-
         // Logique de jeu ici
+        for (Player player : players) {
+            player.sendMessage(MessageType.GAMESTATUS, "STARTED");
+        }
 
-        while (!gameOver) {
+        while (!gameOver && players.getFirst().isConnected() && players.getLast().isConnected()) {
 
             // Joueur 1
             int result;
             do {
-                result = step(player1);
+                result = step(players.getFirst());
             }while (result == 2);
 
 
             // Joueur 2
             do {
-                result = step(player2);
+                result = step(players.getLast());
             }while (result == 2);
         }
 
-        // Fin de la partie
-        player1.sendMessage("Partie terminée.");
-        player2.sendMessage("Partie terminée.");
+        for (Player player : players) {
+            if (player.isConnected()) {
+                player.sendMessage(MessageType.GAMESTATUS, "ended");
+            }
+        }
     }
 
     private int step(Player player) {
-        int[] move1 = askToPlayer(player);
+        int[] move = askToPlayer(player);
 
-        if (move1.length == 1) return 404;
-        else if (move1.length == 0) return 2;
-
-        if (!board.placeMove(player.number , move1[0], move1[1])){
-            player.sendMessage("Coup invalide. Réessayez.");
+        if (!board.placeMove(player.number , move[0], move[1])){
+            player.sendMessage(MessageType.RESPONDSTATUS, "false");
             return 2;
-        }else {
-            for (Player p : players) {
-                p.sendData(board.toString());
-            }
         }
+
+        // Envoyer le mouvement à l'autre joueur
+        players.get((player.number) % 2).sendMessage(MessageType.ENEMYMOVE, move[0] + "," + move[1]);
+
+        player.sendMessage(MessageType.RESPONDSTATUS, "true");
 
         // Vérifier si le joueur a gagné
         if (board.hasWon(player.number)) {
 
-            player.sendMessage("Vous avez gagné.");
-
-            player1.close();
-            player2.close();
+            player.sendMessage(MessageType.GAMESTATUS, "win");
+            players.get((player.number+1) % 2).sendMessage(MessageType.GAMESTATUS, "lose");
 
             gameOver = true;
             return 1;
@@ -84,21 +76,34 @@ public class GameSession implements Runnable {
     // Méthodes pour faire avancer le jeu.
     private int[] askToPlayer(Player player) {
 
-        player.sendMessage("Votre tour. Entrez votre coup :");
-        String move1 = player.receive();
+        if (!player.isConnected()) {
+            this.gameOver = true;
+            players.remove(player);
 
-        if (move1 == null) return new int[1]; // Vérifier si la connexion a été fermée
+            for (Player p : players) {
+                p.sendMessage(MessageType.GAMESTATUS, "enemydisconnected");
+            }
+
+            Thread.currentThread().interrupt();
+        }
+
+        player.sendMessage(MessageType.GAMESTATUS, "yourturn");
+
+
+        String message = player.receive();
+
+        String move = message.split(";")[1];
 
         try {
 
-            int row = Integer.parseInt(move1.split(",")[0]);
-            int col = Integer.parseInt(move1.split(",")[1]);
+            int row = Integer.parseInt(move.split(",")[0]);
+
+            int col = Integer.parseInt(move.split(",")[1]);
 
             return new int[]{row, col};
 
         }catch (NumberFormatException | NullPointerException | ArrayIndexOutOfBoundsException e) {
-            player.sendMessage("Coup invalide. Réessayez.");
-            return new int[0];
+            return new int[]{0, 0};
         }
     }
 }

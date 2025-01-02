@@ -1,54 +1,35 @@
 package fr.tanchou;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.Socket;
-
 public class Player {
-    private final Socket playerSocket;
     int number;
+    Client client;
 
-    private BufferedReader in;
-    private PrintWriter out;
-
-    public Player(Socket playerSocket, int number) {
-        this.playerSocket = playerSocket;
+    public Player(Client client, int number) {
         this.number = number;
-
-        try {
-            this.in = new BufferedReader(new InputStreamReader(playerSocket.getInputStream()));
-            this.out = new PrintWriter(playerSocket.getOutputStream(), true);
-        }catch (IOException e) {
-            System.out.println("Player " + number + " have troubleshooting : " + e.getMessage());
-        }
-
+        this.client = client;
     }
 
-    public void sendMessage(String message) {
-        this.out.println("message," + message);
-    }
-
-    public void sendData(String data) {
-        this.out.println("data," + data);
+    public void sendMessage(MessageType type, String message) {
+        client.sendMessage(type, message);
     }
 
     public String receive(){
-        try {
-            return in.readLine();
-        }catch (IOException e) {
-            System.out.println("Player " + number + "disconnected");
-            return null;
-        }
+        return client.getMessage();
     }
 
     public void close(){
-        try {
-            playerSocket.close();
-        }catch (IOException e) {
-            System.out.println("Player " + number + " disconnected");
-        }
+        client.close();
+    }
 
+    public boolean isClosed() {
+        return client.isClosed();
+    }
+
+    public boolean isConnected() {
+        return client.isConnected();
+    }
+
+    public Client getClient() {
+        return client;
     }
 }
