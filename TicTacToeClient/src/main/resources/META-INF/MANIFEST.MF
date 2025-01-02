@@ -1,3 +1,3 @@
 Manifest-Version: 1.0
-Main-Class: fr.tanchou.tictactoeclient.Main
+Main-Class: fr.tanchou.tictactoeclient.TicTacToeUI
 

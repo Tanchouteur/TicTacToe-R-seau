@@ -3,11 +3,6 @@ package fr.tanchou.tictactoeclient;
 import java.io.*;
 import java.net.*;
 
-import static java.lang.Thread.sleep;
-
-import java.io.*;
-import java.net.*;
-
 public class Main {
     public static void main(String[] args) {
         String serverAddress = "129.151.251.156"; // Adresse du serveur
@@ -20,16 +15,14 @@ public class Main {
 
             System.out.println("Connecté au serveur " + serverAddress + ":" + serverPort);
 
-            // Lire le message de bienvenue du serveur
             String serverMessage = in.readLine();
             System.out.println("Serveur : " + serverMessage);
 
-            // Envoyer le code d'authentification
-            serverMessage = in.readLine(); // Lire "Veuillez entrer le code d'accès :"
+            serverMessage = in.readLine();
             System.out.println("Serveur : " + serverMessage);
 
-            String code = "1234"; // Code d'authentification
-            out.println(code); // Envoyer le code
+            String code = "1234";
+            out.println(code);
 
             // Lire la réponse du serveur
             serverMessage = in.readLine();
