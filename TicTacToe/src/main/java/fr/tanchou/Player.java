@@ -26,8 +26,12 @@ public class Player {
 
     }
 
-    public void send(String message) {
-        this.out.println(message);
+    public void sendMessage(String message) {
+        this.out.println("message," + message);
+    }
+
+    public void sendData(String data) {
+        this.out.println("data," + data);
     }
 
     public String receive(){
